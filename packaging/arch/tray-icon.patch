@@ -1,16 +1,19 @@
 diff --git a/README.md b/README.md
 --- a/README.md
 +++ b/README.md
-@@ -28,4 +28,5 @@
+@@ -27,6 +27,7 @@
+ | **官方引擎** | 整句、乱序/键邻纠错、emoji 和颜文字，和安卓版同一个引擎 |
  | **双拼** | 在 Fcitx5 配置中切换全拼、小鹤、微软双拼；小鹤 `nihc`、微软 `nihk` → 你好，微软 `bzj;` → 北京 |
- | **拼音显示位置** | 可在 Fcitx5 配置中选择把拼音显示在应用输入框里，候选窗只显示候选词；默认拼音显示在候选窗 |
+ | **拼音显示位置** | 可在 Fcitx5 配置中选择把拼音显示在应用输入框里，候选窗停在本轮拼音起始位置；默认拼音显示在候选窗 |
 +| **托盘图标** | 切到微信拼音时显示随包安装的官方绿色圆形图标，便于与其他输入法区分 |
  
  | **模糊音** | 支持全部 19 组官方模糊音（平翘舌 z/c/s、鼻边音 n/l、前后鼻音等），可在 Fcitx5 配置中独立勾选 |
+ | **云候选与热词** | 网络热词、新梗由官方云端补充（如 `zheng yi zs` → 正义之手），断网自动退回本地 |
 diff --git a/docs/安装与使用.md b/docs/安装与使用.md
 --- a/docs/安装与使用.md
 +++ b/docs/安装与使用.md
-@@ -77,4 +77,15 @@
+@@ -74,6 +74,17 @@
+ 
  命令行演示跟随这个设置，也可用 `WETYPE_DOUBLE_PIN=0` 临时选择全拼，`2` 选择微软，
  `3` 选择小鹤。含分号的编码需加引号，例如 `wetype-demo 'bzj;'`。
 +
@@ -26,20 +29,23 @@ diff --git a/docs/安装与使用.md b/docs/安装与使用.md
 +替换后需更新 `PKGBUILD` 中的图片校验值。安装更新后重载 Fcitx5 即可生效。
  
  ### 拼音显示位置
+ 
 diff --git a/fcitx5-wetype/CMakeLists.txt b/fcitx5-wetype/CMakeLists.txt
 --- a/fcitx5-wetype/CMakeLists.txt
 +++ b/fcitx5-wetype/CMakeLists.txt
-@@ -45,2 +45,3 @@
+@@ -55,3 +55,4 @@
+ install(TARGETS fcitx5-wetype LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/fcitx5)
  install(FILES wetype-addon.conf RENAME wetype.conf DESTINATION ${CMAKE_INSTALL_DATADIR}/fcitx5/addon)
  install(FILES wetype-im.conf DESTINATION ${CMAKE_INSTALL_DATADIR}/fcitx5/inputmethod)
 +install(FILES ../assets/wetype-ime.png DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps)
 diff --git a/fcitx5-wetype/wetype-im.conf b/fcitx5-wetype/wetype-im.conf
 --- a/fcitx5-wetype/wetype-im.conf
 +++ b/fcitx5-wetype/wetype-im.conf
-@@ -1,5 +1,5 @@
+@@ -1,6 +1,6 @@
  [InputMethod]
  Name=微信拼音
 -Icon=fcitx-pinyin
 +Icon=wetype-ime
  Label=微
  LangCode=zh_CN
+ Addon=wetype

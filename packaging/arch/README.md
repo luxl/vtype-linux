@@ -19,10 +19,10 @@ ARM64 运行时镜像和腾讯官方微信输入法 3.5.4 APK。后两项分别�
 下载后校验固定 SHA256；已有 makepkg 源码缓存会复用。NDK 已安装时直接使用
 `/opt/android-ndk`。
 
-`0.1.8-2` 在固定源码上应用本目录的 `microsoft-double-pinyin.patch`，加入微软双拼
-设置、分号韵母和相应测试。补丁与下载文件一样校验 SHA256。
-`tray-icon.patch` 让微信拼音使用包内的专用托盘图标。`0.1.8-4` 使用腾讯官网的
-绿色圆形标识，圆形之外透明。
+本地包在固定源码上应用本目录的 `microsoft-double-pinyin.patch`，加入微软双拼
+设置、分号韵母和相应测试；`tray-icon.patch` 让微信拼音使用包内的官方圆形图标。
+补丁与下载文件一样校验 SHA256。`0.1.8-5` 已合入上游行内编辑、候选框定位和
+Python 启动器改进，微软双拼的分号在行内编辑时按当前光标位置判断。
 
 构建过程会运行插件单元测试、离线 Python 测试和真实引擎自检。生成的
 `vtype-linux-*.pkg.tar.zst` 包含插件、运行时、官方引擎和预置词库，可在本机用
@@ -79,8 +79,10 @@ wetype-check --idle-seconds 85
 ## 更新与卸载
 
 更新源码版本时，一起更新 `PKGBUILD` 的 `_commit` 和 `pkgver`；修改打包方式时
-递增 `pkgrel`。更新源码时也要检查本地补丁是否仍需要、是否能应用。APK 版本、下载地址和校验值必须与该提交的 `scripts/fetch_apk.py`
-一致。修改本地配方后重新生成 `.SRCINFO`：
+递增 `pkgrel`。补丁以 `_commit` 指定的上游提交为基线；更新时需适配补丁并更新
+对应校验值。已包含微软双拼和图标改动的本地合并提交不能再重复应用这些补丁。
+APK 版本、下载地址和校验值必须与该提交的 `scripts/fetch_apk.py` 一致。
+修改本地配方后重新生成 `.SRCINFO`：
 
 ```sh
 makepkg --printsrcinfo > .SRCINFO

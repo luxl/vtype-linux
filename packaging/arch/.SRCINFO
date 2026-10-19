@@ -1,7 +1,7 @@
 pkgbase = vtype-linux
 	pkgdesc = 微信输入法 Android 引擎的 Fcitx5 插件
 	pkgver = 0.1.8
-	pkgrel = 4
+	pkgrel = 5
 	url = https://github.com/zhl-HFUT/vtype-linux
 	install = vtype-linux.install
 	arch = x86_64
@@ -36,7 +36,7 @@ pkgbase = vtype-linux
 	options = !strip
 	options = !debug
 	options = !lto
-	source = vtype-linux::git+https://github.com/zhl-HFUT/vtype-linux.git#commit=03b011c359a354bd8a790e24ae6e1552ae788359
+	source = vtype-linux::git+https://github.com/zhl-HFUT/vtype-linux.git#commit=f24a73f4f326271cf5a0ffedde7ebb67c22fa22c
 	source = arm64-v8a-28_r02.zip::https://dl.google.com/android/repository/sys-img/android/arm64-v8a-28_r02.zip
 	source = wetype_3.5.4.apk::https://download.z.weixin.qq.com/app/android/3.5.4/wxkb_1308_32.apk
 	source = microsoft-double-pinyin.patch
@@ -47,10 +47,10 @@ pkgbase = vtype-linux
 	sha256sums = SKIP
 	sha256sums = 86844d2edf6ba7c7f11261f6be3fb37788c985cfcf3b8924cfe9f57a1ccbc0a9
 	sha256sums = 7b57a5a9ab3aefd30413165f298213961bd201815ab48c6ad205c3b2950a90fb
-	sha256sums = a99407808fce4655f2b6022159224c6945d58f34f7cb539d41daf4fc81854a31
-	sha256sums = d3f119840577cd006e8fe4829437b241675e6e7fc6b88dd46ceb84f1d5bc917f
+	sha256sums = 1bfec450f18f2613edcc20bc2fc9faccfe955730b76527ac8466b67f06dc0574
+	sha256sums = 19f49df6eafa204787607be4dfe2d173ed6169477183a35f9b54774f3b896d73
 	sha256sums = f1b23d6b6ecf586386af2f8f3fbceb3236b2139f82581f2f792bcf114a501cea
-	sha256sums = 9b2f211d64be391d1c31620bdf6dcdabef2916bb3954fdf8fd03347a2e86c140
+	sha256sums = b62c3fb2c3c9270a47d88984d0f226da01510f63f86185e8147fccbd216531d4
 	sha256sums = afe9bd0e559d59bd806e0e3916ec3e09a9cd914867fdf27a895f520fc858dc75
 
 pkgname = vtype-linux

@@ -194,6 +194,31 @@ def test_fcitx(args):
                 assert client.commits[before:] == ["南京"], client.commits
                 print("PASS 微软分号退格重输与快速空格上屏", flush=True)
 
+                # 总长为偶数，但光标在韵母位置：分号必须插入编码。
+                client.type("bzjnih")
+                before = len(client.commits)
+                client.press(0xff50)
+                for _ in range(3):
+                    client.press("right")
+                client.press(";", delay=0.5)
+                assert len(client.commits) == before, client.commits
+                assert "bz j; ni h" in preedits, preedits
+                client.press(0xff57)
+                client.press("k", delay=0.5)
+                client.press("enter")
+                assert client.commits[before:] == ["bzj;nihk"], client.commits
+
+                # 总长为奇数，但光标在完整音节后：分号仍按标点处理。
+                client.type("nihkbzj")
+                before = len(client.commits)
+                client.press("a", states=4)
+                client.press("f", states=4)
+                client.press("f", states=4)
+                client.press(";")
+                assert len(client.commits) == before + 1, client.commits
+                assert client.commits[-1].endswith("；"), client.commits
+                print("PASS 微软行内插入与 Readline 光标处的分号标点", flush=True)
+
                 before = len(client.commits)
                 client.press(";")
                 assert client.commits[before:] == ["；"], client.commits

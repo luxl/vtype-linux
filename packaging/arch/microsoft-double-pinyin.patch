@@ -1,17 +1,20 @@
 diff --git a/README.md b/README.md
 --- a/README.md
 +++ b/README.md
-@@ -26,5 +26,5 @@ agent 会检查系统环境、编译、安装、启用输入法并跑一遍自
+@@ -25,7 +25,7 @@
+ | | 说明 |
  |---|---|
  | **官方引擎** | 整句、乱序/键邻纠错、emoji 和颜文字，和安卓版同一个引擎 |
 -| **小鹤双拼** | 在 Fcitx5 配置中切换全拼/小鹤，`nihc` → 你好，`vsgo` → 中国 |
 +| **双拼** | 在 Fcitx5 配置中切换全拼、小鹤、微软双拼；小鹤 `nihc`、微软 `nihk` → 你好，微软 `bzj;` → 北京 |
- | **拼音显示位置** | 可在 Fcitx5 配置中选择把拼音显示在应用输入框里，候选窗只显示候选词；默认拼音显示在候选窗 |
+ | **拼音显示位置** | 可在 Fcitx5 配置中选择把拼音显示在应用输入框里，候选窗停在本轮拼音起始位置；默认拼音显示在候选窗 |
  
+ | **模糊音** | 支持全部 19 组官方模糊音（平翘舌 z/c/s、鼻边音 n/l、前后鼻音等），可在 Fcitx5 配置中独立勾选 |
 diff --git a/docs/安装与使用.md b/docs/安装与使用.md
 --- a/docs/安装与使用.md
 +++ b/docs/安装与使用.md
-@@ -58,15 +61,20 @@ python3 ~/.local/lib/wetype-ime/arm64/wetype-cloud.py clipboard disable
+@@ -57,17 +57,23 @@
+ 
  ## 3. 日常使用
  
 -### 全拼与小鹤双拼
@@ -31,29 +34,36 @@ diff --git a/docs/安装与使用.md b/docs/安装与使用.md
 -其他双拼方案尚未加入图形设置。
 +微软方案在小写编码的第二键位置用 `;` 输入 `ing`；未组词或完整音节之后按 `;`
 +仍输入分号标点，带大写字母的英文输入也按标点处理。`Shift+;` 照常输入冒号。
++行内编辑时按当前光标位置判断分号是编码还是标点。
 +勾选“始终使用英文标点”不会改变分号韵母；若把分号设为翻页键，韵母位置优先输入编码。
 +
 +命令行演示跟随这个设置，也可用 `WETYPE_DOUBLE_PIN=0` 临时选择全拼，`2` 选择微软，
 +`3` 选择小鹤。含分号的编码需加引号，例如 `wetype-demo 'bzj;'`。
  
  ### 拼音显示位置
-@@ -95,4 +103,5 @@ python3 ~/.local/lib/wetype-ime/arm64/wetype-cloud.py clipboard disable
- | `-` `=` / 方向键 / PgUp PgDn | 翻页（支持在配置中自定义） |
- | 数字键 | 选择候选 |
+ 
+@@ -103,6 +109,7 @@
+ | `-` `=` / 方向键 `↑` `↓` / PgUp PgDn | 翻页（支持在配置中自定义） |
+ | 数字键 / 空格 | 选择候选上屏（空格上屏当前选中的候选） |
+ | Readline 快捷键 | 组词时支持 `Ctrl+A`/`E`（首尾）、`Ctrl+B`/`F`（前进后退）、`Ctrl+D`/`H`（删字）、`Ctrl+K`/`U`（删至行尾/行首） |
 +| `;` | 微软双拼中，小写编码的第二键输入 `ing`；其他位置按标点或自定义翻页设置处理 |
  
- - 候选翻页键：
-@@ -133,5 +142,5 @@ bash fcitx5-wetype/e2e/run_paging_e2e.sh
+ - 拼音光标行内编辑与定位：
+   - 默认开启（`ArrowKeysMoveCursor=true`）。输入拼音后尚未确认候选时，按 `←` / `→` 可将光标精确定位到指定字母处插入或修改（例如输入 `shrufa` 后按 4 次左键定位到 `h` 后插入 `u` 变成 `shurufa`，立即更新候选词）。
+@@ -146,7 +153,7 @@
+ bash fcitx5-wetype/e2e/run_paging_e2e.sh
  ```
  
 -小鹤双拼的集成检查使用临时词库：
 +小鹤和微软双拼的集成检查使用临时词库：
  
  ```sh
+ python3 scripts/test_double_pinyin.py --engine-dir ~/.local/lib/wetype-ime/arm64
 diff --git a/fcitx5-wetype/CMakeLists.txt b/fcitx5-wetype/CMakeLists.txt
 --- a/fcitx5-wetype/CMakeLists.txt
 +++ b/fcitx5-wetype/CMakeLists.txt
-@@ -16,5 +16,6 @@ include(CTest)
+@@ -22,7 +22,8 @@
+ include(CTest)
  if(BUILD_TESTING)
      add_executable(double-pinyin-test tests/double_pinyin_test.cpp)
 -    target_include_directories(double-pinyin-test PRIVATE ../harness)
@@ -61,10 +71,12 @@ diff --git a/fcitx5-wetype/CMakeLists.txt b/fcitx5-wetype/CMakeLists.txt
 +    target_link_libraries(double-pinyin-test PRIVATE Fcitx5::Core)
      add_test(NAME double_pinyin COMMAND double-pinyin-test)
      add_executable(glossary-test tests/glossary_test.cpp)
+     target_include_directories(glossary-test PRIVATE src)
 diff --git a/fcitx5-wetype/src/config.h b/fcitx5-wetype/src/config.h
 --- a/fcitx5-wetype/src/config.h
 +++ b/fcitx5-wetype/src/config.h
-@@ -7,10 +7,30 @@
+@@ -6,12 +6,33 @@
+ #include <fcitx-utils/i18n.h>
  #include <fcitx-utils/key.h>
  #include <fcitx-utils/keysym.h>
 +#include <string_view>
@@ -85,43 +97,52 @@ diff --git a/fcitx5-wetype/src/config.h b/fcitx5-wetype/src/config.h
 +    }
 +}
 +
-+inline bool doublePinSemicolon(PinyinScheme scheme, std::string_view buffer) {
++inline bool doublePinSemicolon(PinyinScheme scheme, std::string_view buffer, size_t cursor) {
 +    // 微软双拼用分号输入 ing；只在小写编码的第二键位置接收。
 +    // 空编码、完整音节之后和带大写的英文输入仍使用标点规则。
-+    if (scheme != PinyinScheme::Microsoft || buffer.size() % 2 != 1) return false;
++    if (scheme != PinyinScheme::Microsoft || cursor > buffer.size() || cursor % 2 != 1) return false;
 +    for (size_t i = 0; i < buffer.size(); ++i) {
 +        const char c = buffer[i];
-+        if (!(c >= 'a' && c <= 'z') && !(c == ';' && i % 2 == 1)) return false;
++        // 光标后的编码可能正在修正，分号位置只检查光标前的前缀。
++        if (!(c >= 'a' && c <= 'z') && !(c == ';' && (i >= cursor || i % 2 == 1))) return false;
 +    }
 +    return true;
 +}
  
  FCITX_CONFIGURATION(WeTypeConfig,
+     OptionWithAnnotation<PinyinScheme, PinyinSchemeI18NAnnotation> pinyinScheme{
 diff --git a/fcitx5-wetype/src/wetype.cpp b/fcitx5-wetype/src/wetype.cpp
 --- a/fcitx5-wetype/src/wetype.cpp
 +++ b/fcitx5-wetype/src/wetype.cpp
-@@ -481,5 +481,5 @@ public:
+@@ -401,7 +401,7 @@
+     explicit WeTypeEngine(Instance *instance)
          : instance_(instance), eng_(instance->eventLoop()) {
          readAsIni(config_, "conf/wetype.conf");
 -        eng_.setDoublePinSolution(*config_.pinyinScheme == PinyinScheme::Flypy ? 3 : 0);
 +        eng_.setDoublePinSolution(doublePinSolution(*config_.pinyinScheme));
          eng_.setFuzzyFlags(config_.fuzzyFlags());
          signal(SIGPIPE, SIG_IGN);
-@@ -655,5 +655,5 @@ private:
+         if (!instance_->inputContextManager().registerProperty("wetype-punctuation-state", &punctuationFactory_)) {
+@@ -575,7 +575,7 @@
+         }
          restartSource_.reset();
          eng_.stop();
 -        eng_.setDoublePinSolution(*config_.pinyinScheme == PinyinScheme::Flypy ? 3 : 0);
 +        eng_.setDoublePinSolution(doublePinSolution(*config_.pinyinScheme));
          eng_.setFuzzyFlags(config_.fuzzyFlags());
          ensureEngine();
-@@ -704,5 +704,5 @@ private:
+     }
+@@ -624,7 +624,7 @@
+         panel.reset();
          // Frontends may commit preedit on focus-out; include all consumed text.
          Text preedit = pending_ ? Text(pendingRaw())
--                                : pinyinPreedit(buf_, *config_.pinyinScheme == PinyinScheme::Flypy);
-+                                : pinyinPreedit(buf_, *config_.pinyinScheme != PinyinScheme::FullPinyin);
+-                                : pinyinPreedit(buf_, *config_.pinyinScheme == PinyinScheme::Flypy, cursor_);
++                                : pinyinPreedit(buf_, *config_.pinyinScheme != PinyinScheme::FullPinyin, cursor_);
          const bool inInput = *config_.showPinyinInInput &&
                               ic.capabilityFlags().test(CapabilityFlag::Preedit) &&
-@@ -1413,12 +1413,12 @@ void WeTypeEngine::processKey(KeyEvent &event) {
+                              ic.isPreeditEnabled();
+@@ -1475,14 +1475,14 @@
+             ic->propertyFor(&punctuationFactory_)->lastDigit = true;
          }
          // 字母保留大小写送给引擎（如 BevFusion 可匹配词库里的英文词）。
 +        // 微软双拼的分号韵母与字母共用输入、退格和异步候选路径。
@@ -129,7 +150,7 @@ diff --git a/fcitx5-wetype/src/wetype.cpp b/fcitx5-wetype/src/wetype.cpp
          if ((sym >= FcitxKey_a && sym <= FcitxKey_z) ||
 -            (sym >= FcitxKey_A && sym <= FcitxKey_Z)) {
 +            (sym >= FcitxKey_A && sym <= FcitxKey_Z) ||
-+            (sym == FcitxKey_semicolon && doublePinSemicolon(*config_.pinyinScheme, buf_))) {
++            (sym == FcitxKey_semicolon && doublePinSemicolon(*config_.pinyinScheme, buf_, cursor_))) {
              if (buf_.empty()) recoveryTried_ = false;
              const bool replayBuffer = !eng_.alive() && !buf_.empty();
 -            char c = (sym >= FcitxKey_a && sym <= FcitxKey_z)
@@ -138,10 +159,11 @@ diff --git a/fcitx5-wetype/src/wetype.cpp b/fcitx5-wetype/src/wetype.cpp
 +            const char c = static_cast<char>(sym);
              ensureEngine();
              ++revision_;
+             candidatesCurrent_ = false;
 diff --git a/fcitx5-wetype/tests/double_pinyin_test.cpp b/fcitx5-wetype/tests/double_pinyin_test.cpp
 --- a/fcitx5-wetype/tests/double_pinyin_test.cpp
 +++ b/fcitx5-wetype/tests/double_pinyin_test.cpp
-@@ -1,7 +1,10 @@
+@@ -1,8 +1,11 @@
  #include "pinyin_scheme.h"
 +#include "config.h"
 +#include <fcitx-config/rawconfig.h>
@@ -152,7 +174,9 @@ diff --git a/fcitx5-wetype/tests/double_pinyin_test.cpp b/fcitx5-wetype/tests/do
 +    using namespace fcitx;
      const char *invalid[] = {nullptr, "", "8", "9", "-1", "3x", "03", " 3", "3 "};
      for (const char *value : invalid) {
-@@ -18,4 +21,29 @@ int main() {
+         if (wetype_double_pin_solution(value) != 0) {
+@@ -17,5 +20,42 @@
+             return EXIT_FAILURE;
          }
      }
 +    // 已保存的小鹤配置保持兼容，新增微软配置可往返保存。
@@ -173,10 +197,22 @@ diff --git a/fcitx5-wetype/tests/double_pinyin_test.cpp b/fcitx5-wetype/tests/do
 +            std::pair{"", false}, {"b", true}, {"bz", false}, {"bzj", true},
 +            {"bzj;", false}, {"j;j", true}, {"ABC", false}, {"bZj", false},
 +            {";", false}, {"b;;", false}, {"bz'", false}}) {
-+        if (doublePinSemicolon(PinyinScheme::Microsoft, buffer) != expected ||
-+            doublePinSemicolon(PinyinScheme::FullPinyin, buffer) ||
-+            doublePinSemicolon(PinyinScheme::Flypy, buffer)) {
++        const auto cursor = std::string_view(buffer).size();
++        if (doublePinSemicolon(PinyinScheme::Microsoft, buffer, cursor) != expected ||
++            doublePinSemicolon(PinyinScheme::FullPinyin, buffer, cursor) ||
++            doublePinSemicolon(PinyinScheme::Flypy, buffer, cursor)) {
 +            std::cerr << "分号编码和标点边界错误\n";
++            return EXIT_FAILURE;
++        }
++    }
++    // 总长度和插入位置的奇偶性不一定相同；后半段也可能暂时缺码。
++    struct CursorCase { const char *buffer; size_t cursor; bool expected; };
++    for (const auto &item : {
++            CursorCase{"bzjnih", 3, true}, {"bzjnih;", 3, true},
++            {"nihkbzj", 2, false}, {"nihkbzj", 0, false},
++            {"bzjABC", 3, false}, {"bzj", 4, false}}) {
++        if (doublePinSemicolon(PinyinScheme::Microsoft, item.buffer, item.cursor) != item.expected) {
++            std::cerr << "行内编辑的分号编码位置错误\n";
 +            return EXIT_FAILURE;
 +        }
 +    }
@@ -185,7 +221,8 @@ diff --git a/fcitx5-wetype/tests/double_pinyin_test.cpp b/fcitx5-wetype/tests/do
 diff --git a/scripts/test_double_pinyin.py b/scripts/test_double_pinyin.py
 --- a/scripts/test_double_pinyin.py
 +++ b/scripts/test_double_pinyin.py
-@@ -12,8 +12,17 @@ import time
+@@ -11,10 +11,19 @@
+ 
  
  def test_engine(args):
 +    test_engine_scheme(args, "小鹤", "3", "nihc", [
@@ -204,7 +241,9 @@ diff --git a/scripts/test_double_pinyin.py b/scripts/test_double_pinyin.py
 +    os.environ["WETYPE_DOUBLE_PIN"] = solution
      with tempfile.TemporaryDirectory(prefix="vtype-double-pin.") as directory:
          work = Path(directory) / "dict"
-@@ -29,24 +38,23 @@ def test_engine(args):
+         (work / "userdict/v5").mkdir(parents=True)
+@@ -28,32 +37,31 @@
+ 
              engine = start()
              try:
 -                for key in "nihc":
@@ -237,14 +276,16 @@ diff --git a/scripts/test_double_pinyin.py b/scripts/test_double_pinyin.py
 +                words = engine.candidates(hello)
                  before = words.index((4, "拟好"))
                  engine.command(f"S {before}", "OK")
-@@ -54,5 +62,5 @@ def test_engine(args):
+                 time.sleep(0.5)
                  engine.command("C", "OK")
                  time.sleep(0.5)
 -                learned = engine.candidates("nihc").index((4, "拟好"))
 +                learned = engine.candidates(hello).index((4, "拟好"))
                  assert learned < before
                  engine.command("SAVE", "OK")
-@@ -62,8 +70,20 @@ def test_engine(args):
+             finally:
+@@ -61,10 +69,22 @@
+ 
              engine = start()
              try:
 -                assert engine.candidates("nihc").index((4, "拟好")) <= learned
@@ -267,20 +308,26 @@ diff --git a/scripts/test_double_pinyin.py b/scripts/test_double_pinyin.py
 +        print(f"PASS {name}命令行演示跟随配置", flush=True)
  
  
-@@ -78,4 +98,6 @@ def test_fcitx(args):
+ def test_fcitx(args):
+@@ -77,6 +97,8 @@
+         root = Path(directory)
          config = root / "config/fcitx5"
          config.mkdir(parents=True)
 +        (config / "conf").mkdir()
 +        (config / "conf/wetype.conf").write_text("PinyinScheme=微软双拼\n")
          (config / "profile").write_text(
              "[Groups/0]\nName=Default\nDefault Layout=us\nDefaultIM=wetype-im\n"
-@@ -85,4 +107,5 @@ def test_fcitx(args):
+             "[Groups/0/Items/0]\nName=keyboard-us\nLayout=\n"
+@@ -84,6 +106,7 @@
+             "[GroupOrder]\n0=Default\n")
          os.environ.update(
              XDG_CONFIG_HOME=str(root / "config"), XDG_DATA_HOME=str(root / "data"),
 +            XDG_STATE_HOME=str(root / "state"), XDG_CACHE_HOME=str(root / "cache"),
              XDG_DATA_DIRS=str(args.addon_prefix / "share"),
              WETYPE_ENGINE_DIR=str(args.engine_dir), WETYPE_WORK_DIR=str(root / "dict"),
-@@ -123,6 +146,7 @@ def test_fcitx(args):
+             WETYPE_HARNESS_LOG=str(root / "harness.log"),
+@@ -122,8 +145,9 @@
+                 pump()
                  url = "fcitx://config/inputmethod/wetype-im"
                  raw, description = controller.GetConfig(url)
 -                assert "PinyinScheme" in raw, raw
@@ -289,9 +336,12 @@ diff --git a/scripts/test_double_pinyin.py b/scripts/test_double_pinyin.py
 +                assert "微软双拼" in str(description), description
                  preedits = []
                  bus.add_signal_receiver(
-@@ -138,4 +162,72 @@ def test_fcitx(args):
+                     lambda *values: preedits.append("".join(str(part[0]) for part in values[0])),
+@@ -136,6 +160,99 @@
+                     pump(2)
+                     current, _ = controller.GetConfig(url)
                      assert str(current["PinyinScheme"]) == value
- 
++
 +                def commit(code, expected):
 +                    before = len(client.commits)
 +                    client.type(code)
@@ -324,6 +374,31 @@ diff --git a/scripts/test_double_pinyin.py b/scripts/test_double_pinyin.py
 +                        break
 +                assert client.commits[before:] == ["南京"], client.commits
 +                print("PASS 微软分号退格重输与快速空格上屏", flush=True)
++
++                # 总长为偶数，但光标在韵母位置：分号必须插入编码。
++                client.type("bzjnih")
++                before = len(client.commits)
++                client.press(0xff50)
++                for _ in range(3):
++                    client.press("right")
++                client.press(";", delay=0.5)
++                assert len(client.commits) == before, client.commits
++                assert "bz j; ni h" in preedits, preedits
++                client.press(0xff57)
++                client.press("k", delay=0.5)
++                client.press("enter")
++                assert client.commits[before:] == ["bzj;nihk"], client.commits
++
++                # 总长为奇数，但光标在完整音节后：分号仍按标点处理。
++                client.type("nihkbzj")
++                before = len(client.commits)
++                client.press("a", states=4)
++                client.press("f", states=4)
++                client.press("f", states=4)
++                client.press(";")
++                assert len(client.commits) == before + 1, client.commits
++                assert client.commits[-1].endswith("；"), client.commits
++                print("PASS 微软行内插入与 Readline 光标处的分号标点", flush=True)
 +
 +                before = len(client.commits)
 +                client.press(";")
@@ -359,10 +434,11 @@ diff --git a/scripts/test_double_pinyin.py b/scripts/test_double_pinyin.py
 +                client.press("esc")
 +                raw["NextPage"] = next_page
 +                print("PASS 分号韵母与自定义翻页键的优先级", flush=True)
-+
+ 
                  scheme("小鹤双拼")
                  client.type("nihc")
-@@ -154,11 +246,19 @@ def test_fcitx(args):
+@@ -153,13 +270,21 @@
+                 assert client.commits[-1] == "你好", client.commits
                  print("PASS 双拼退格和重输", flush=True)
  
 +                client.type("bwj")
@@ -385,10 +461,12 @@ diff --git a/scripts/test_double_pinyin.py b/scripts/test_double_pinyin.py
 +                print("PASS 全拼和小鹤标点回归、热切换及配置保存", flush=True)
              except BaseException:
                  print("\n".join((root / "fcitx.log").read_text(errors="replace").splitlines()[-35:]))
+                 raise
 diff --git a/src/wetype-ime-demo.sh b/src/wetype-ime-demo.sh
 --- a/src/wetype-ime-demo.sh
 +++ b/src/wetype-ime-demo.sh
-@@ -22,6 +22,9 @@ if [ -z "${WETYPE_DOUBLE_PIN+x}" ]; then
+@@ -21,8 +21,11 @@
+   CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/fcitx5/conf/wetype.conf"
    if [ -r "$CONFIG" ]; then
      while IFS='=' read -r key value; do
 -      if [ "$key" = PinyinScheme ] && [ "$value" = 小鹤双拼 ]; then
@@ -400,3 +478,4 @@ diff --git a/src/wetype-ime-demo.sh b/src/wetype-ime-demo.sh
 +        esac
        fi
      done < "$CONFIG"
+   fi
