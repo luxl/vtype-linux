@@ -9,12 +9,24 @@ Fcitx5、QEMU、Python、OpenSSL、Snappy 使用 Arch 软件包；构建工具�
 在仓库根目录执行：
 
 ```sh
-yay -S --needed android-ndk-27
-cd packaging/arch
-makepkg -si
+bash packaging/arch/build-install.sh
 ```
 
-`makepkg` 会安装缺少的官方仓库依赖，并下载固定提交的源码、Google 的 Android 9
+依赖统一维护在 `PKGBUILD`：`depends` 是运行依赖，`makedepends` 是编译依赖，
+`checkdepends` 用于检查，`optdepends` 列出可选功能依赖。脚本读取当前配方，
+用 `pacman -T` 找出缺失项，再交给 `yay` 解析官方仓库和 AUR 依赖（例如 NDK）；
+没有 `yay` 时只能安装官方仓库依赖。可选功能依赖不会自动安装。
+
+脚本随后用 `makepkg` 编译并运行检查，成功后用 `pacman -U` 安装。
+安装依赖和 VType 时优先弹出 Polkit 认证；没有 `pkexec` 时使用
+`sudo`。构建失败会停止，不会继续安装旧包。脚本不会自动重启输入法。
+
+下载缓存保存在 `.deps/arch/sources/`，构建目录在 `.deps/arch/build/`，安装包在
+`.deps/arch/packages/`；再次运行会复用下载文件，并重新创建源码构建目录。
+只生成安装包可加 `--build-only`；仅替换图标时可加 `--skip-checks` 跳过检查。
+也可以进入本目录手动执行 `makepkg -si`。
+
+构建会下载固定提交的源码、Google 的 Android 9
 ARM64 运行时镜像和腾讯官方微信输入法 3.5.4 APK。后两项分别约 407 MB、214 MB，
 下载后校验固定 SHA256；已有 makepkg 源码缓存会复用。NDK 已安装时直接使用
 `/opt/android-ndk`。
@@ -86,8 +98,10 @@ APK 版本、下载地址和校验值必须与该提交的 `scripts/fetch_apk.py
 
 ```sh
 makepkg --printsrcinfo > .SRCINFO
-makepkg -si
+bash build-install.sh
 ```
+
+脚本使用当前 `PKGBUILD` 的固定源码提交，不会自动合并远程代码或更新补丁。
 
 卸载前先退出 Fcitx5，使用 `sudo pacman -R vtype-linux` 移除系统包。
 个人词库、设备身份和输入法设置会保留。
