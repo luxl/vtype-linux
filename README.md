@@ -1,7 +1,11 @@
 # VType Linux
 
-[![源码检查](https://github.com/zhl-HFUT/vtype-linux/actions/workflows/check.yml/badge.svg)](https://github.com/zhl-HFUT/vtype-linux/actions/workflows/check.yml)
+[![上游源码检查](https://github.com/zhl-HFUT/vtype-linux/actions/workflows/check.yml/badge.svg)](https://github.com/zhl-HFUT/vtype-linux/actions/workflows/check.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+
+> **个人派生版本**：本仓库 [luxl/vtype-linux](https://github.com/luxl/vtype-linux) 基于 [zhl-HFUT/vtype-linux](https://github.com/zhl-HFUT/vtype-linux)，用于个人使用和定制，并按需合并上游更新。主体实现和文档来自上游及其贡献者，保留原有作者信息、提交历史和 GPL-3.0 许可证。
+
+本分支主要增加了微软双拼及其分号韵母、行内编辑适配，改用微信输入法官方圆形托盘图标，并提供 [Arch Linux / EndeavourOS 的 PKGBUILD 与编译安装脚本](packaging/arch/README.md)。感谢直接上游 [zhl-HFUT/vtype-linux](https://github.com/zhl-HFUT/vtype-linux) 和更早完成引擎适配的 [yu1745/wetype-ime-linux](https://github.com/yu1745/wetype-ime-linux)。
 
 在 Linux 上用**微信输入法**。Fcitx5 里跑的是官方 Android 引擎，候选和手机上同源；关联你的手机或 Mac 后，个人词库双向同步，云候选、常用语也都能用。
 
@@ -12,7 +16,7 @@
 把下面这段话发给你的 Codex、Claude Code 或其他编程 agent：
 
 ```text
-帮我在这台 Linux 上安装 VType Linux：https://github.com/zhl-HFUT/vtype-linux
+帮我在这台 Linux 上安装 VType Linux：https://github.com/luxl/vtype-linux
 克隆仓库后按仓库根目录的 AGENTS.md 操作。需要 sudo、需要我输入关联码、或要改 Fcitx5 配置的时候，先停下来问我。
 ```
 
@@ -28,7 +32,6 @@ agent 会检查系统环境、编译、安装、启用输入法并跑一遍自�
 | **双拼** | 在 Fcitx5 配置中切换全拼、小鹤、微软双拼；小鹤 `nihc`、微软 `nihk` → 你好，微软 `bzj;` → 北京 |
 | **拼音显示位置** | 可在 Fcitx5 配置中选择把拼音显示在应用输入框里，候选窗停在本轮拼音起始位置；默认拼音显示在候选窗 |
 | **托盘图标** | 切到微信拼音时显示随包安装的官方绿色圆形图标，便于与其他输入法区分 |
-
 | **模糊音** | 支持全部 19 组官方模糊音（平翘舌 z/c/s、鼻边音 n/l、前后鼻音等），可在 Fcitx5 配置中独立勾选 |
 | **云候选与热词** | 网络热词、新梗由官方云端补充（如 `zheng yi zs` → 正义之手），断网自动退回本地 |
 | **二级词库** | 下载官方更新的公共词库，补上 APK 发布之后出现的新词 |
@@ -38,7 +41,7 @@ agent 会检查系统环境、编译、安装、启用输入法并跑一遍自�
 | **大小写混输** | 带大写的输入按英文处理，`OpenC` → OpenClaw，词库里的英文词保留你打的大小写 |
 | **按键习惯** | 单独按 Shift 切中英，中文标点自动配对，数字里的小数点保持英文；方向键左右移动拼音光标（可精准定位插入修改，支持 Home/End/Delete/Readline 键）；Tab 循环选词；可自定义翻页键（默认 -/=、方向键、PgUp/PgDn）；可配置“始终使用英文标点” |
 
-本项目基于 [yu1745/wetype-ime-linux](https://github.com/yu1745/wetype-ime-linux)：上游把引擎跑了起来（本地输入、纠错、emoji），这里补上了云候选、二级词库、个人词库同步、常用语、大小写混输和 Shift 中英切换。
+上述主体功能来自上游：[yu1745/wetype-ime-linux](https://github.com/yu1745/wetype-ime-linux) 完成了引擎适配（本地输入、纠错、emoji），[zhl-HFUT/vtype-linux](https://github.com/zhl-HFUT/vtype-linux) 在此基础上加入云候选、二级词库、个人词库同步、常用语、大小写混输和 Shift 中英切换等功能。
 
 不支持：语音、手写、图片常用语、在 Linux 上编辑常用语、图片剪贴板和文件互传。
 
@@ -53,7 +56,7 @@ agent 会检查系统环境、编译、安装、启用输入法并跑一遍自�
 | Ubuntu 24.04、其他发行版 | CI 能编译，还没有实机反馈 |
 | ARM64 | 上游支持原生运行，本项目的云功能没验证 |
 
-在其他环境装成功或失败了，都欢迎[开个 issue](https://github.com/zhl-HFUT/vtype-linux/issues/new/choose) 说一声，这是现在最缺的信息。
+在其他环境装成功或失败了，都欢迎在[本仓库开个 issue](https://github.com/luxl/vtype-linux/issues/new) 说一声。
 
 ## 会发送什么
 
@@ -79,7 +82,7 @@ Linux不发送上屏报告或整库快照文件。手动请求快照重建时，
 
 这个项目适合用 agent 来维护：仓库根目录的 [AGENTS.md](AGENTS.md) 写明了结构、构建、测试和规矩，Codex、Claude Code 打开仓库就能读到。
 
-- **报问题**：让你的 agent 按 AGENTS.md 里的“报告问题”一节收集环境信息，再[开 issue](https://github.com/zhl-HFUT/vtype-linux/issues/new/choose)。
+- **报问题**：让你的 agent 按 AGENTS.md 里的“报告问题”一节收集环境信息，再到[本仓库开 issue](https://github.com/luxl/vtype-linux/issues/new)。
 - **提改进**：体验上的不顺手（按键习惯、候选显示、某个应用里不好用）都可以提，附上你期望的行为。
 - **提 PR**：见 [参与贡献](CONTRIBUTING.md)。改动请附上你是怎么验证的。
 - **跟进新版**：官方 APK 更新后，适配新版本是最需要人手的事，步骤见 AGENTS.md 的“升级官方版本”。
@@ -95,9 +98,10 @@ Linux不发送上屏报告或整库快照文件。手动请求快照重建时，
 
 ## 致谢
 
-- [yu1745/wetype-ime-linux](https://github.com/yu1745/wetype-ime-linux)：把引擎在 Linux 上跑起来的上游项目。
+- [zhl-HFUT/vtype-linux](https://github.com/zhl-HFUT/vtype-linux)：本仓库的直接上游，提供 VType Linux 的主体功能、文档和持续维护。
+- [yu1745/wetype-ime-linux](https://github.com/yu1745/wetype-ime-linux)：更早把引擎在 Linux 上跑起来的上游项目。
 - [mkdir700/wx-ime-sdk](https://github.com/mkdir700/wx-ime-sdk)：设备协议参考。
-- [LINUX DO](https://linux.do)：项目在这里首发，欢迎来社区交流。
+- [LINUX DO](https://linux.do)：上游项目的首发社区。
 
 ## 许可
 
