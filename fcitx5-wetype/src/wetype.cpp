@@ -480,7 +480,7 @@ public:
     explicit WeTypeEngine(Instance *instance)
         : instance_(instance), eng_(instance->eventLoop()) {
         readAsIni(config_, "conf/wetype.conf");
-        eng_.setDoublePinSolution(*config_.pinyinScheme == PinyinScheme::Flypy ? 3 : 0);
+        eng_.setDoublePinSolution(doublePinSolution(*config_.pinyinScheme));
         eng_.setFuzzyFlags(config_.fuzzyFlags());
         signal(SIGPIPE, SIG_IGN);
         if (!instance_->inputContextManager().registerProperty("wetype-punctuation-state", &punctuationFactory_)) {
@@ -654,7 +654,7 @@ private:
         }
         restartSource_.reset();
         eng_.stop();
-        eng_.setDoublePinSolution(*config_.pinyinScheme == PinyinScheme::Flypy ? 3 : 0);
+        eng_.setDoublePinSolution(doublePinSolution(*config_.pinyinScheme));
         eng_.setFuzzyFlags(config_.fuzzyFlags());
         ensureEngine();
     }
@@ -703,7 +703,7 @@ private:
         panel.reset();
         // Frontends may commit preedit on focus-out; include all consumed text.
         Text preedit = pending_ ? Text(pendingRaw())
-                                : pinyinPreedit(buf_, *config_.pinyinScheme == PinyinScheme::Flypy);
+                                : pinyinPreedit(buf_, *config_.pinyinScheme != PinyinScheme::FullPinyin);
         const bool inInput = *config_.showPinyinInInput &&
                              ic.capabilityFlags().test(CapabilityFlag::Preedit) &&
                              ic.isPreeditEnabled();
@@ -1412,14 +1412,14 @@ void WeTypeEngine::processKey(KeyEvent &event) {
             ic->propertyFor(&punctuationFactory_)->lastDigit = true;
         }
         // 字母保留大小写送给引擎（如 BevFusion 可匹配词库里的英文词）。
+        // 微软双拼的分号韵母与字母共用输入、退格和异步候选路径。
         // Ctrl/Alt/Super/Meta 组合键已在上面放行。
         if ((sym >= FcitxKey_a && sym <= FcitxKey_z) ||
-            (sym >= FcitxKey_A && sym <= FcitxKey_Z)) {
+            (sym >= FcitxKey_A && sym <= FcitxKey_Z) ||
+            (sym == FcitxKey_semicolon && doublePinSemicolon(*config_.pinyinScheme, buf_))) {
             if (buf_.empty()) recoveryTried_ = false;
             const bool replayBuffer = !eng_.alive() && !buf_.empty();
-            char c = (sym >= FcitxKey_a && sym <= FcitxKey_z)
-                         ? static_cast<char>('a' + (sym - FcitxKey_a))
-                         : static_cast<char>('A' + (sym - FcitxKey_A));
+            const char c = static_cast<char>(sym);
             ensureEngine();
             ++revision_;
             buf_ += c;

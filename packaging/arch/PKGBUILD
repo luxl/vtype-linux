@@ -1,0 +1,132 @@
+# Maintainer: 本地包使用者
+# 在本机构建、通过 pacman 管理的 VType 包。
+pkgname=vtype-linux
+pkgver=0.1.8
+pkgrel=4
+pkgdesc='微信输入法 Android 引擎的 Fcitx5 插件'
+arch=('x86_64')
+url='https://github.com/zhl-HFUT/vtype-linux'
+license=('GPL-3.0-only' 'LicenseRef-WeType' 'LicenseRef-AOSP')
+depends=('bash' 'fcitx5' 'glibc' 'hicolor-icon-theme' 'libgcc' 'libstdc++' 'openssl' 'python'
+         'python-cryptography' 'qemu-user-static' 'snappy')
+makedepends=('android-ndk-27' 'cmake' 'curl' 'e2fsprogs' 'file' 'git' 'unzip')
+optdepends=('fcitx5-configtool: 图形输入法设置'
+            'nodejs>=22: 运行可选的官方设备关联客户端 wxc'
+            'npm: 安装可选的 wxc 客户端'
+            'wl-clipboard: Wayland 剪贴板互通'
+            'xclip: X11 剪贴板互通')
+# 包内包含 ARM64 ELF，不能用宿主机的 strip 或调试包拆分处理。
+options=('!strip' '!debug' '!lto')
+install=vtype-linux.install
+
+_commit=03b011c359a354bd8a790e24ae6e1552ae788359
+_apkver=3.5.4
+source=("vtype-linux::git+${url}.git#commit=${_commit}"
+        'arm64-v8a-28_r02.zip::https://dl.google.com/android/repository/sys-img/android/arm64-v8a-28_r02.zip'
+        "wetype_${_apkver}.apk::https://download.z.weixin.qq.com/app/android/${_apkver}/wxkb_1308_32.apk"
+        'microsoft-double-pinyin.patch'
+        'tray-icon.patch'
+        'tray-icon.png'
+        'README.md'
+        'vtype-linux.install')
+noextract=('arm64-v8a-28_r02.zip' "wetype_${_apkver}.apk")
+sha256sums=('SKIP'
+            '86844d2edf6ba7c7f11261f6be3fb37788c985cfcf3b8924cfe9f57a1ccbc0a9'
+            '7b57a5a9ab3aefd30413165f298213961bd201815ab48c6ad205c3b2950a90fb'
+            'a99407808fce4655f2b6022159224c6945d58f34f7cb539d41daf4fc81854a31'
+            'd3f119840577cd006e8fe4829437b241675e6e7fc6b88dd46ceb84f1d5bc917f'
+            'f1b23d6b6ecf586386af2f8f3fbceb3236b2139f82581f2f792bcf114a501cea'
+            '9b2f211d64be391d1c31620bdf6dcdabef2916bb3954fdf8fd03347a2e86c140'
+            'afe9bd0e559d59bd806e0e3916ec3e09a9cd914867fdf27a895f520fc858dc75')
+
+prepare() {
+  cd "$srcdir/vtype-linux"
+  patch -Np1 -i "$srcdir/microsoft-double-pinyin.patch"
+  patch -Np1 -i "$srcdir/tray-icon.patch"
+  install -m644 "$srcdir/tray-icon.png" assets/wetype-ime.png
+}
+
+build() {
+  cd "$srcdir/vtype-linux"
+  export ANDROID_NDK_HOME=/opt/android-ndk
+  export WETYPE_AOSP_IMAGE="$srcdir/arm64-v8a-28_r02.zip"
+  export WETYPE_APK_ROOT="$srcdir/wetype-apk"
+
+  # 复用已有的构建和二进制补丁入口；所有下载由 makepkg 的 source 管理。
+  bash scripts/prepare_assets.sh "$srcdir/wetype_${_apkver}.apk"
+  bash scripts/e1_appdir.sh
+  local engine="$PWD/AppDir/usr/lib/wetype-ime/arm64"
+  bash scripts/10_patch_libs.sh "$engine/lib"
+  cp -a "$WETYPE_APK_ROOT/assets/config/beta" "$engine/dicts"
+
+  # 运行时使用 Arch 的 QEMU 包，避免重复打包一份模拟器。
+  rm "$engine/qemu-aarch64-static"
+  ln -s /usr/bin/qemu-aarch64-static "$engine/qemu-aarch64-static"
+}
+
+check() {
+  cd "$srcdir/vtype-linux"
+  ctest --test-dir fcitx5-wetype/build --output-on-failure
+  python3 -m unittest discover -s tests -p 'test_*.py'
+  python3 tests/test_snapshot_transport.py
+  python3 scripts/test_bionic_daemon.py \
+    --engine-dir "$PWD/AppDir/usr/lib/wetype-ime/arm64" --idle-seconds 85
+  python3 scripts/test_double_pinyin.py --engine-dir "$PWD/AppDir/usr/lib/wetype-ime/arm64"
+}
+
+package() {
+  cd "$srcdir/vtype-linux"
+  install -dm755 "$pkgdir/usr"
+  cp -a --no-preserve=ownership AppDir/usr/. "$pkgdir/usr/"
+  local engine="$pkgdir/usr/lib/wetype-ime/arm64"
+
+  # 仅剥离本项目编译产物的符号；ARM64 使用 NDK 工具，官方运行库保持原样。
+  strip --strip-unneeded "$pkgdir/usr/lib/fcitx5/libfcitx5-wetype.so"
+  "/opt/android-ndk/toolchains/llvm/prebuilt/linux-$CARCH/bin/llvm-strip" \
+    --strip-unneeded "$engine/wetype-harness" "$engine/lib/libandroid.so" \
+    "$engine/libwetype-cloud.so"
+
+  # 安装和卸载统一交给 pacman，不提供另一套 AppImage 安装入口。
+  rm -rf "$pkgdir/usr/lib/wetype-ime/scripts"
+  rm "$pkgdir/usr/lib/wetype-ime/appimage-manage.sh"
+  install -m644 cloud/resource_versions.json "$engine/cloud/"
+  install -Dm644 scripts/test_bionic_daemon.py \
+    "$pkgdir/usr/share/vtype-linux/test_bionic_daemon.py"
+
+  cat > "$pkgdir/usr/bin/wetype-cloud" <<'EOF'
+#!/bin/bash
+export WETYPE_ENGINE_DIR="${WETYPE_ENGINE_DIR:-/usr/lib/wetype-ime/arm64}"
+exec /usr/bin/python3 /usr/lib/wetype-ime/arm64/wetype-cloud.py "$@"
+EOF
+  cat > "$pkgdir/usr/bin/wetype-check" <<'EOF'
+#!/bin/bash
+exec /usr/bin/python3 /usr/share/vtype-linux/test_bionic_daemon.py \
+  --engine-dir "${WETYPE_ENGINE_DIR:-/usr/lib/wetype-ime/arm64}" "$@"
+EOF
+  chmod 755 "$pkgdir/usr/bin/wetype-cloud" "$pkgdir/usr/bin/wetype-check"
+
+  install -Dm644 "$srcdir/README.md" "$pkgdir/usr/share/doc/vtype-linux/ArchLinux.md"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/vtype-linux/README.md"
+  cp -a --no-preserve=ownership docs "$pkgdir/usr/share/doc/vtype-linux/"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 runtime/sysroot/NOTICE "$pkgdir/usr/share/licenses/$pkgname/AOSP-NOTICE"
+  install -Dm644 licenses/Apache-2.0.txt "$pkgdir/usr/share/licenses/$pkgname/Apache-2.0"
+
+  cat > "$pkgdir/usr/share/doc/wetype-ime/THIRD-PARTY.md" <<EOF
+# 第三方组件
+
+- QEMU 由 Arch 的 qemu-user-static 包提供，入口链接到 /usr/bin/qemu-aarch64-static。
+- Android/bionic 运行库来自 Google 的 Android 9 ARM64 系统镜像 arm64-v8a-28_r02，
+  许可文本在 /usr/share/licenses/$pkgname/AOSP-NOTICE。
+- JNI 声明使用 Apache-2.0，来源见同目录 JNI-SOURCE.md。
+- 微信输入法托盘图标来自腾讯官网，相关权利归腾讯所有。
+  来源：https://cdn.weread.qq.com/web/wetype/favicon/icon-152.png
+- 微信输入法 $_apkver 的引擎和预置词库来自腾讯官方 APK，相关权利归腾讯所有。
+  来源：https://download.z.weixin.qq.com/app/android/$_apkver/wxkb_1308_32.apk
+  SHA256：7b57a5a9ab3aefd30413165f298213961bd201815ab48c6ad205c3b2950a90fb
+
+本地构建的包包含上述官方引擎和预置词库；仓库只保存打包脚本。
+EOF
+  install -m644 "$pkgdir/usr/share/doc/wetype-ime/THIRD-PARTY.md" \
+    "$pkgdir/usr/share/licenses/$pkgname/WeType.txt"
+}

@@ -21,8 +21,11 @@ if [ -z "${WETYPE_DOUBLE_PIN+x}" ]; then
   CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/fcitx5/conf/wetype.conf"
   if [ -r "$CONFIG" ]; then
     while IFS='=' read -r key value; do
-      if [ "$key" = PinyinScheme ] && [ "$value" = 小鹤双拼 ]; then
-        WETYPE_DOUBLE_PIN=3
+      if [ "$key" = PinyinScheme ]; then
+        case "$value" in
+          小鹤双拼) WETYPE_DOUBLE_PIN=3 ;;
+          微软双拼) WETYPE_DOUBLE_PIN=2 ;;
+        esac
       fi
     done < "$CONFIG"
   fi

@@ -1,0 +1,10 @@
+post_install() {
+  printf '%s\n' \
+    'VType 已安装。可运行 wetype-check --idle-seconds 85 做隔离自检。' \
+    '准备好后重启 Fcitx5，在输入法设置中添加“微信拼音”。' \
+    '安装说明：/usr/share/doc/vtype-linux/ArchLinux.md'
+}
+
+post_upgrade() {
+  post_install
+}

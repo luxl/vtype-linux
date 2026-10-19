@@ -1,0 +1,8 @@
+/src/
+/pkg/
+/vtype-linux/
+/*.apk
+/*.zip
+/*.pkg.tar.*
+/*.src.tar.*
+/*.log

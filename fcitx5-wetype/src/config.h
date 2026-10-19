@@ -6,12 +6,32 @@
 #include <fcitx-utils/i18n.h>
 #include <fcitx-utils/key.h>
 #include <fcitx-utils/keysym.h>
+#include <string_view>
 #include "fuzzy_pinyin.h"
 
 namespace fcitx {
 
-enum class PinyinScheme { FullPinyin, Flypy };
-FCITX_CONFIG_ENUM_NAME_WITH_I18N(PinyinScheme, N_("全拼"), N_("小鹤双拼"));
+enum class PinyinScheme { FullPinyin, Flypy, Microsoft };
+FCITX_CONFIG_ENUM_NAME_WITH_I18N(PinyinScheme, N_("全拼"), N_("小鹤双拼"), N_("微软双拼"));
+
+constexpr int doublePinSolution(PinyinScheme scheme) {
+    switch (scheme) {
+    case PinyinScheme::Flypy: return 3;
+    case PinyinScheme::Microsoft: return 2;
+    default: return 0;
+    }
+}
+
+inline bool doublePinSemicolon(PinyinScheme scheme, std::string_view buffer) {
+    // 微软双拼用分号输入 ing；只在小写编码的第二键位置接收。
+    // 空编码、完整音节之后和带大写的英文输入仍使用标点规则。
+    if (scheme != PinyinScheme::Microsoft || buffer.size() % 2 != 1) return false;
+    for (size_t i = 0; i < buffer.size(); ++i) {
+        const char c = buffer[i];
+        if (!(c >= 'a' && c <= 'z') && !(c == ';' && i % 2 == 1)) return false;
+    }
+    return true;
+}
 
 FCITX_CONFIGURATION(WeTypeConfig,
     OptionWithAnnotation<PinyinScheme, PinyinSchemeI18NAnnotation> pinyinScheme{
