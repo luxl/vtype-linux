@@ -13,7 +13,7 @@ AOSP 运行库从 nixpkgs 提供的 Android 9 ARM64 系统镜像提取；编译�
 
 ## 首次安装
 
-系统需先启用 Fcitx5。安装包后，初始化命令从腾讯服务器下载微信输入法 3.5.4 APK，
+系统需先启用 Fcitx5。安装包后，初始化命令从腾讯服务器下载微信输入法 4.0.1 APK，
 校验固定 SHA-256，在用户机器上提取引擎和词库并应用上游引擎补丁：
 
 ```sh
@@ -22,7 +22,7 @@ wetype-setup
 wetype-check
 ```
 
-下载约 214 MB，后续可复用缓存；已有 APK 时执行 `wetype-setup --apk /path/to/wetype_3.5.4.apk`。
+下载约 220 MiB，后续可复用缓存；已有 APK 时执行 `wetype-setup --apk /path/to/wetype_4.0.1.apk`。
 APK、腾讯引擎与词库不会进入 Nix 包；AOSP 运行库及本项目桥接库随包提供。
 `nix run .#wetype-setup` 和 `nix run .#wetype-check` 也可直接使用。
 
@@ -107,7 +107,7 @@ python3 scripts/test_clipboard_desktop.py --backend x11
 空用户目录安装与私有 Fcitx 检查可在开发环境中运行：
 
 ```sh
-python3 nix/check-install.py --package ./result --apk /path/to/wetype_3.5.4.apk
+python3 nix/check-install.py --package ./result --apk /path/to/wetype_4.0.1.apk
 ```
 
 该检查覆盖重复初始化、数据保留、云桥接库加载、本地与关闭联网的云代理入口，

@@ -1,6 +1,7 @@
 """在私有 D-Bus 会话验证 Shift 切换提示、自动隐藏和组词保护。"""
 import os
 from pathlib import Path
+import time
 
 from dbus_test_client import Client, controller, paused_engine, pump
 
@@ -33,11 +34,18 @@ class HintClient(Client):
         self.press(key, states=1, release=True)
 
 
+def wait_hidden(client):
+    # 等待实际 UI 信号，给并行构建时的事件调度留出余量。
+    deadline = time.monotonic() + 3
+    while client.hint and time.monotonic() < deadline:
+        pump(.02)
+    assert client.hint == '', '提示应自动隐藏：' + repr(client.hint)
+
+
 configure_hint()
 c = HintClient()
 c.focus()
-pump(1.1)
-assert c.hint == '', c.hint
+wait_hidden(c)
 
 for key in (SHIFT_L, SHIFT_R):
     c.tap_shift(key)
@@ -51,8 +59,7 @@ for key in (SHIFT_L, SHIFT_R):
     assert str(controller.CurrentInputMethod()) == 'wetype-im'
 print('PASS 左右 Shift 均显示中/英，不上屏提示文字、不切换输入法')
 
-pump(1.1)
-assert c.hint == '', '提示应自动隐藏'
+wait_hidden(c)
 c.tap_shift()
 c.tap_shift()
 assert c.hint == '中', repr(c.hint)
@@ -83,7 +90,7 @@ assert ''.join(c.commits) == 'nihao zhongguo' and not c.candidates
 assert c.hint == '英', '迟到引擎响应不应覆盖模式提示'
 c.commits.clear()
 c.tap_shift()
-pump(1.1)
+wait_hidden(c)
 print('PASS 等待候选时切换保留所有按键，迟到响应不覆盖提示')
 
 c.press(SHIFT_L)

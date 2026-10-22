@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parent;sys.path.insert(0,str(ROOT))
 import 官方同步探针 as p
 
-ENGINE='0.45.0.weekly_release/2026.08.28.3dfdf30e'
+ENGINE='0.45.0.weekly_release/2026.09.23.v2.5387de93'
 
 def request(index,versions,hot):
     body=p.number(1,1)+p.blob(2,ENGINE)+p.number(5,431 if hot else 367)

@@ -13,7 +13,7 @@ usage() {
   -h, --help     显示帮助
 
 依赖从 PKGBUILD 读取；有 yay 时自动解析官方仓库和 AUR 依赖。
-脚本按当前配方的固定源码提交构建；更新项目后需先同步配方和补丁。
+脚本直接构建当前仓库源码，包含尚未提交的修改；不会自动拉取或合并远程代码。
 EOF
 }
 
@@ -97,6 +97,12 @@ if (( ${#dependencies[@]} )); then
     fi
   fi
 fi
+
+# 先冻结当前源码；makepkg 使用这份归档，不读取另一个上游提交。
+export VTYPE_SOURCE_SHA256
+VTYPE_SOURCE_SHA256="$(python3 "$repo_root/scripts/export_source.py" \
+  --output "$SRCDEST/vtype-linux-source.tar")"
+printf '当前源码快照 SHA256：%s\n' "$VTYPE_SOURCE_SHA256"
 
 build_options=(--config "$makepkg_config" --cleanbuild --force --syncdeps)
 if "$skip_checks"; then build_options+=(--nocheck); fi

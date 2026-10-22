@@ -4,7 +4,7 @@
 
 ## 项目是什么
 
-在 Fcitx5 里运行微信输入法 Android 3.5.4 的官方引擎：
+在 Fcitx5 里运行微信输入法 Android 4.0.1 的官方引擎：
 
 - `fcitx5-wetype/`：Fcitx5 插件（C++），负责按键、候选窗、中英切换、标点、常用语、大小写混输。
 - `harness/`：JNI 宿主（C），模拟 Android 环境，把 `libwxhld.so` 跑起来。x86_64 上通过 QEMU 运行 ARM64 代码。
@@ -35,7 +35,7 @@ Ubuntu 22.04 / 24.04：
 ```sh
 sudo apt install build-essential cmake libfcitx5core-dev file qemu-user-static e2fsprogs unzip \
   python3 python3-cryptography libsnappy1v5 openssl curl
-git clone https://github.com/zhl-HFUT/vtype-linux.git && cd vtype-linux
+git clone https://github.com/luxl/vtype-linux.git && cd vtype-linux
 bash scripts/prepare_ndk.sh
 export ANDROID_NDK_HOME="$PWD/.deps/tools/android-ndk-r27c"
 bash scripts/e2_img.sh
@@ -49,7 +49,7 @@ bash scripts/e2_img.sh
 ./WeTypeIME-Engine-x86_64.AppImage install --user
 ```
 
-会下载官方 APK（约 214 MB）并校验。没有 FUSE 时加环境变量 `APPIMAGE_EXTRACT_AND_RUN=1`。
+会下载官方 APK（约 220 MiB）并校验。没有 FUSE 时加环境变量 `APPIMAGE_EXTRACT_AND_RUN=1`。
 
 ### 4. 在 Fcitx5 里启用“微信拼音”
 
@@ -153,19 +153,21 @@ python3 scripts/test_clipboard_desktop.py --backend x11   # 需要 Xvfb、xclip
 
 - 文档、注释、提交信息用中文。文档写给用户看：直接说能做什么、怎么做，不写内部过程和免责声明。
 - 改动对应的文档一起更新，尤其是 README 的功能表和 `docs/安装与使用.md` 的按键表。
+- 功能与适配直接修改通用源码。Arch 构建从当前工作区导出源码，不使用额外的源码补丁或单独的图标副本。
 - 合并上游 [yu1745/wetype-ime-linux](https://github.com/yu1745/wetype-ime-linux) 时，注意 `harness/jinterop.c` 里 SessionConfig 的默认值不要覆盖本项目设置的云配置和设备组信息。
 - `harness/dict_table.h` 必须和 APK 里的词库清单（`index.json`）一致，否则全新安装会启动失败。
 - 修改历史词库恢复时，分别验证空白词库和已有词库副本的实际记录、候选与重启；下载成功或原生合并日志不能单独证明完整恢复。恢复入口见 [恢复历史词库](docs/恢复历史词库.md)，不直接替换正在使用的词库。
 
 ### 升级官方版本
 
-官方 APK 更新时，下面这些地方写死了 3.5.4，需要一起核对：
+官方 APK 更新时，下面这些地方固定了当前版本，需要一起核对：
 
 - `scripts/fetch_apk.py`、`scripts/prepare_assets.sh`：版本号、下载地址、SHA256。
 - `scripts/10_patch_libs.sh`、`scripts/1*_*.py`、`scripts/30_patch_leak.py`：针对具体二进制的补丁，偏移量多半要重新找。
 - `harness/dict_table.h`：从新 APK 的 `index.json` 重新生成。
 - `harness/jinterop.c`：SessionConfig 默认值（取自 APK 的 `SessionConfig` 类）、`appVer`。
-- `cloud/官方同步探针.py`：`VERSION`；`cloud/resource_versions.json`。
+- `cloud/官方同步探针.py`：`VERSION`；`cloud/公共资源.py` 的引擎构建标识；`cloud/resource_versions.json`。
+- `packaging/arch/PKGBUILD`：APK 版本、文件名、SHA256，与通用下载脚本保持一致。
 - `scripts/pull-snapshot-copy.py`：只接受 3.5.4，确认新版本快照格式不变后再放开。
 
 升级后至少跑完上面的测试和安装自检，并在真实账号上确认云候选和词库同步正常。

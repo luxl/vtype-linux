@@ -4,7 +4,7 @@
 # 实际工作在 fetch_apk.py（纯 python3 标准库），安装机无需 curl/unzip/sha256sum。
 set -euo pipefail
 
-WETYPE_VERSION=3.5.4
+WETYPE_VERSION=4.0.1
 
 BASE="$(cd "$(dirname "$0")/.." && pwd)"
 APK="${1:-}"

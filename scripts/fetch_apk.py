@@ -14,9 +14,9 @@ import time
 import urllib.request
 import zipfile
 
-WETYPE_VERSION = "3.5.4"
-WETYPE_APK_URL = "https://download.z.weixin.qq.com/app/android/%s/wxkb_1308_32.apk" % WETYPE_VERSION
-WETYPE_APK_SHA256 = "7b57a5a9ab3aefd30413165f298213961bd201815ab48c6ad205c3b2950a90fb"
+WETYPE_VERSION = "4.0.1"
+WETYPE_APK_URL = "https://download.z.weixin.qq.com/app/android/%s/wxkb_1401_32.apk" % WETYPE_VERSION
+WETYPE_APK_SHA256 = "f2afac5f2d5a9d69edd1a16c5d047bda82d58fadf46fd8306ef42a199a212187"
 PREFIXES = ("lib/arm64-v8a/", "assets/config/beta/")
 CHUNK = 1 << 20
 
@@ -119,7 +119,7 @@ def main():
             print("Using cached WeType %s APK: %s" % (WETYPE_VERSION, apk))
         else:
             os.makedirs(cache, exist_ok=True)
-            print("Downloading WeType %s APK (214 MB) from %s" % (WETYPE_VERSION, WETYPE_APK_URL),
+            print("Downloading WeType %s APK (220 MiB) from %s" % (WETYPE_VERSION, WETYPE_APK_URL),
                   flush=True)
             download(WETYPE_APK_URL, apk)
     elif not os.path.isfile(apk):

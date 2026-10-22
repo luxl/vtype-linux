@@ -20,7 +20,7 @@ from cryptography.hazmat.primitives.padding import PKCS7
 
 ROOT = Path(__file__).resolve().parent
 STATE = Path(os.environ.get("WETYPE_STATE_DIR", Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "wetype-ime/account")).expanduser().resolve()
-VERSION = "3.5.4.57423"
+VERSION = "4.0.1.58201"
 SALT = "aI0wC6qT1nB3nN5r"
 
 def varint(n):

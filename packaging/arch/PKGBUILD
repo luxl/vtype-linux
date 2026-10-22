@@ -2,10 +2,10 @@
 # 在本机构建、通过 pacman 管理的 VType 包。
 pkgname=vtype-linux
 pkgver=0.1.8
-pkgrel=6
+pkgrel=7
 pkgdesc='微信输入法 Android 引擎的 Fcitx5 插件'
 arch=('x86_64')
-url='https://github.com/zhl-HFUT/vtype-linux'
+url='https://github.com/luxl/vtype-linux'
 license=('GPL-3.0-only' 'LicenseRef-WeType' 'LicenseRef-AOSP')
 depends=('bash' 'fcitx5' 'glibc' 'hicolor-icon-theme' 'libgcc' 'libstdc++' 'openssl' 'python'
          'python-cryptography' 'qemu-user-static' 'snappy')
@@ -19,35 +19,21 @@ optdepends=('fcitx5-configtool: 图形输入法设置'
 options=('!strip' '!debug' '!lto')
 install=vtype-linux.install
 
-_commit=f24a73f4f326271cf5a0ffedde7ebb67c22fa22c
-_apkver=3.5.4
-source=("vtype-linux::git+${url}.git#commit=${_commit}"
+_apkver=4.0.1
+_apkfile=wxkb_1401_32.apk
+_apksha256=f2afac5f2d5a9d69edd1a16c5d047bda82d58fadf46fd8306ef42a199a212187
+# build-install.sh 从当前工作区生成源码归档及其校验值。
+source=('vtype-linux-source.tar'
         'arm64-v8a-28_r02.zip::https://dl.google.com/android/repository/sys-img/android/arm64-v8a-28_r02.zip'
-        "wetype_${_apkver}.apk::https://download.z.weixin.qq.com/app/android/${_apkver}/wxkb_1308_32.apk"
-        'microsoft-double-pinyin.patch'
-        'tray-icon.patch'
-        'mode-hint.patch'
-        'tray-icon.png'
+        "wetype_${_apkver}.apk::https://download.z.weixin.qq.com/app/android/${_apkver}/${_apkfile}"
         'README.md'
         'vtype-linux.install')
 noextract=('arm64-v8a-28_r02.zip' "wetype_${_apkver}.apk")
-sha256sums=('SKIP'
+sha256sums=("${VTYPE_SOURCE_SHA256:-SKIP}"
             '86844d2edf6ba7c7f11261f6be3fb37788c985cfcf3b8924cfe9f57a1ccbc0a9'
-            '7b57a5a9ab3aefd30413165f298213961bd201815ab48c6ad205c3b2950a90fb'
-            '1bfec450f18f2613edcc20bc2fc9faccfe955730b76527ac8466b67f06dc0574'
-            '19f49df6eafa204787607be4dfe2d173ed6169477183a35f9b54774f3b896d73'
-            '3bd6f12642697f79995e4f50e58b4b09c787c0685d0a9962a806630852986115'
-            'f1b23d6b6ecf586386af2f8f3fbceb3236b2139f82581f2f792bcf114a501cea'
-            'c4c7565e61f58cc20a30fea8f31766ad97376470736292cc0414448baf625cf7'
+            "$_apksha256"
+            'efa89a7e04c42f77451b65b9376f365b99207f8f236e0defa86a4815c0bbc417'
             'afe9bd0e559d59bd806e0e3916ec3e09a9cd914867fdf27a895f520fc858dc75')
-
-prepare() {
-  cd "$srcdir/vtype-linux"
-  patch -Np1 -i "$srcdir/microsoft-double-pinyin.patch"
-  patch -Np1 -i "$srcdir/tray-icon.patch"
-  patch -Np1 -i "$srcdir/mode-hint.patch"
-  install -m644 "$srcdir/tray-icon.png" assets/wetype-ime.png
-}
 
 build() {
   cd "$srcdir/vtype-linux"
@@ -125,8 +111,8 @@ EOF
 - 微信输入法托盘图标来自腾讯官网，相关权利归腾讯所有。
   来源：https://cdn.weread.qq.com/web/wetype/favicon/icon-152.png
 - 微信输入法 $_apkver 的引擎和预置词库来自腾讯官方 APK，相关权利归腾讯所有。
-  来源：https://download.z.weixin.qq.com/app/android/$_apkver/wxkb_1308_32.apk
-  SHA256：7b57a5a9ab3aefd30413165f298213961bd201815ab48c6ad205c3b2950a90fb
+  来源：https://download.z.weixin.qq.com/app/android/$_apkver/$_apkfile
+  SHA256：$_apksha256
 
 本地构建的包包含上述官方引擎和预置词库；仓库只保存打包脚本。
 EOF

@@ -24,19 +24,15 @@ bash packaging/arch/build-install.sh
 下载缓存保存在 `.deps/arch/sources/`，构建目录在 `.deps/arch/build/`，安装包在
 `.deps/arch/packages/`；再次运行会复用下载文件，并重新创建源码构建目录。
 只生成安装包可加 `--build-only`；仅替换图标时可加 `--skip-checks` 跳过检查。
-也可以进入本目录手动执行 `makepkg -si`。
 
-构建会下载固定提交的源码、Google 的 Android 9
-ARM64 运行时镜像和腾讯官方微信输入法 3.5.4 APK。后两项分别约 407 MB、214 MB，
-下载后校验固定 SHA256；已有 makepkg 源码缓存会复用。NDK 已安装时直接使用
-`/opt/android-ndk`。
+脚本从当前 Git 工作区生成 `vtype-linux-source.tar`，包含尚未提交的源码修改和
+未被 Git 忽略的新增文件，排除构建缓存及已删除文件，再将归档和 SHA256 交给
+`makepkg`。微软双拼、托盘图标、Shift 提示和引擎适配都直接维护在仓库源码中；
+普通 CMake、AppImage、Nix 和 Arch 构建使用相同实现。
 
-本地包在固定源码上应用本目录的 `microsoft-double-pinyin.patch`，加入微软双拼
-设置、分号韵母和相应测试；`tray-icon.patch` 让微信拼音使用包内的官方圆形图标。
-补丁与下载文件一样校验 SHA256。`0.1.8-5` 已合入上游行内编辑、候选框定位和
-Python 启动器改进，微软双拼的分号在行内编辑时按当前光标位置判断。
-`0.1.8-6` 通过 `mode-hint.patch` 补上 Shift 中英切换时的光标提示；
-Fcitx5 开启紧凑显示时只显示“中”或“英”。
+构建会下载 Google 的 Android 9 ARM64 运行时镜像和腾讯官方微信输入法
+4.0.1 APK，分别约 407 MiB、220 MiB，下载后校验固定 SHA256；已有缓存会复用。
+NDK 已安装时直接使用 `/opt/android-ndk`。`0.1.8-7` 使用 Android 4.0.1 的官方引擎。
 
 构建过程会运行插件单元测试、离线 Python 测试和真实引擎自检。生成的
 `vtype-linux-*.pkg.tar.zst` 包含插件、运行时、官方引擎和预置词库，可在本机用
@@ -55,8 +51,8 @@ wetype-check --idle-seconds 85
 包安装不会修改 Fcitx5 分组、重启输入法、关联账号或启用云功能。
 升级后重启 Fcitx5，在“微信拼音”的“拼音方案”中选择“微软双拼”。
 输入 `nihk` 出“你好”，`bzj;` 出“北京”；Rime 的方案和词库不受影响。
-切换到微信拼音时，托盘自动显示官方绿色圆形图标。自定义外观可替换本目录的
-`tray-icon.png`（透明背景 PNG），更新 `PKGBUILD` 中对应的 SHA256，再重新打包。
+切换到微信拼音时，托盘自动显示官方绿色圆形图标。自定义外观可替换仓库的
+`assets/wetype-ime.png`（透明背景 PNG），再运行构建脚本重新打包。
 图标随包安装，不需要修改桌面主题。当前 PNG 原图为 152×152，来源于
 [微信输入法官网](https://cdn.weread.qq.com/web/wetype/favicon/icon-152.png)，相关权利归腾讯所有。
 
@@ -92,10 +88,10 @@ wetype-check --idle-seconds 85
 
 ## 更新与卸载
 
-更新源码版本时，一起更新 `PKGBUILD` 的 `_commit` 和 `pkgver`；修改打包方式时
-递增 `pkgrel`。补丁以 `_commit` 指定的上游提交为基线；更新时需适配补丁并更新
-对应校验值。已包含微软双拼和图标改动的本地合并提交不能再重复应用这些补丁。
-APK 版本、下载地址和校验值必须与该提交的 `scripts/fetch_apk.py` 一致。
+合并远程更新或修改源码后，重新运行构建脚本即可使用当前代码生成安装包。
+发布包版本变化时更新 `pkgver`，同一版本的修补递增 `pkgrel`。
+升级官方引擎时，`PKGBUILD` 的 APK 版本、文件名和校验值须与仓库中的
+`scripts/fetch_apk.py` 一致。
 修改本地配方后重新生成 `.SRCINFO`：
 
 ```sh
@@ -103,7 +99,7 @@ makepkg --printsrcinfo > .SRCINFO
 bash build-install.sh
 ```
 
-脚本使用当前 `PKGBUILD` 的固定源码提交，不会自动合并远程代码或更新补丁。
+脚本不会自动拉取或合并远程代码。
 
 卸载前先退出 Fcitx5，使用 `sudo pacman -R vtype-linux` 移除系统包。
 个人词库、设备身份和输入法设置会保留。

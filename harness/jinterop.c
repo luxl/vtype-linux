@@ -929,7 +929,7 @@ static void build_env(void) {
 }
 
 static JObj g_sesscfg;   /* daemon 重建会话复用 */
-/* 嵌套配置对象：结构与默认值取自 APK 的 com/tencent/wxhld/info/SessionConfig（3.5.4）。
+/* 嵌套配置对象：结构与默认值取自 APK 的 com/tencent/wxhld/info/SessionConfig（4.0.1）。
  * 真实 app 由 Java 构造函数填好默认值；这里若缺失，胶水层 auto-complete 会给全 0
  * 的空对象——其中 InputAugmenter 的 enable_exchange（相邻字母乱序纠错）等五个
  * 纠错开关默认应为 true，全 0 会导致引擎关闭全部纠错（乱序输入无法纠错）。 */
@@ -1597,7 +1597,7 @@ int main(int argc, char **argv) {
         if (!sp || !*sp) sp = ".deps/wechat-ime/assets";
         obj_set(&g_initinfo, "sourcePath", 's', sp);
     }
-    obj_set(&g_initinfo, "appVer", 's', "3.5.4");
+    obj_set(&g_initinfo, "appVer", 's', "4.0.1");
     obj_set(&g_initinfo, "systemVersion", 's', "linux-6.1");
     obj_set(&g_initinfo, "deviceName", 's', "aarch64-linux");
     obj_set(&g_initinfo, "devicePerformance", 'i', (void *)(long)devperf);
@@ -1731,7 +1731,7 @@ int main(int argc, char **argv) {
             void *login=dlsym(h,"_Z13network_loginP7_JNIEnvP8_jobjectS2_");
             static JObj network;
             network.cls="com/tencent/wxhld/info/NetworkInfo";
-            obj_set(&network,"appVer",'s',"3.5.4.57423");obj_set(&network,"deviceCode",'s',"LinuxBridge");
+            obj_set(&network,"appVer",'s',"4.0.1.58201");obj_set(&network,"deviceCode",'s',"LinuxBridge");
             if(!login)return 6;
             ((void (*)(void *,void *,void *))login)(g_env,NULL,&network);
             obj_set(&g_cpi,"return_cnt",'i',(void *)10);

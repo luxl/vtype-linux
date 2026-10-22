@@ -1,4 +1,4 @@
-/* 由微信输入法 Android 3.5.4 APK 自带 assets/config/beta/index.json 生成；is_cell 决定原生加载接口。
+/* 由微信输入法 Android 4.0.1 APK 自带 assets/config/beta/index.json 生成；is_cell 决定原生加载接口。
  * 关联账号后可用 scripts/prepare-public-resources.py 下载更新资源并生成新表。 */
 static const struct { const char *name; int type; int version; int is_cell; } g_dict_table[] = {
     {"sw.bin", 65560, 1643, 0},
