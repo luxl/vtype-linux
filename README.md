@@ -3,11 +3,21 @@
 [![上游源码检查](https://github.com/zhl-HFUT/vtype-linux/actions/workflows/check.yml/badge.svg)](https://github.com/zhl-HFUT/vtype-linux/actions/workflows/check.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 
-> **个人派生版本**：本仓库 [luxl/vtype-linux](https://github.com/luxl/vtype-linux) 基于 [zhl-HFUT/vtype-linux](https://github.com/zhl-HFUT/vtype-linux)，用于个人使用和定制，并按需合并上游更新。主体实现和文档来自上游及其贡献者，保留原有作者信息、提交历史和 GPL-3.0 许可证。
+在 Linux 上用**微信输入法**：官方 Android 引擎、熟悉的双拼方案，融入 Fcitx5 的日常输入体验。关联手机或 Mac 后，还能同步新学词条、使用云候选和常用语。
 
-本分支主要增加了微软双拼及其分号韵母、行内编辑适配，改用微信输入法官方圆形托盘图标，并提供 [Arch Linux / EndeavourOS 的 PKGBUILD 与编译安装脚本](packaging/arch/README.md)。感谢直接上游 [zhl-HFUT/vtype-linux](https://github.com/zhl-HFUT/vtype-linux) 和更早完成引擎适配的 [yu1745/wetype-ime-linux](https://github.com/yu1745/wetype-ime-linux)。
+## 本分支新增特性
 
-在 Linux 上用**微信输入法**。Fcitx5 里跑的是官方 Android 引擎，候选和手机上同源；关联你的手机或 Mac 后，个人词库双向同步，云候选、常用语也都能用。
+- **升级至官方 4.0.1 引擎**：已适配微信输入法 Android 4.0.1，本地输入、双拼、词条学习与重启保存均通过验证。
+- **新增微软双拼**：`nihk` → 你好，`bzj;` → 北京；支持分号韵母和行内修改，在 Fcitx5 设置中即可切换。
+- **Shift 切中英，状态看得见**：支持在光标附近短暂提示当前模式，也可使用简洁的“中 / 英”显示。
+- **Arch / EndeavourOS 一条命令安装**：提供依赖检查、编译、自检和安装脚本，生成的软件包由 pacman 管理，方便升级与卸载。
+- **官方绿色圆形托盘图标**：切到微信拼音时显示熟悉的图标，方便辨认当前输入法。
+
+这些改动直接维护在通用源码中，普通 CMake、AppImage、Nix 和 Arch 构建使用相同实现。
+
+**开始使用：** [Arch / EndeavourOS 安装](packaging/arch/README.md) · [通用安装指南](docs/安装与使用.md) · [Nix / NixOS 安装](docs/NixOS.md)
+
+> **个人派生版本**：本仓库 [luxl/vtype-linux](https://github.com/luxl/vtype-linux) 基于 [zhl-HFUT/vtype-linux](https://github.com/zhl-HFUT/vtype-linux)，用于个人使用和定制，并按需合并上游更新。主体实现和文档来自上游及其贡献者，保留原有作者信息、提交历史和 GPL-3.0 许可证。感谢更早完成引擎适配的 [yu1745/wetype-ime-linux](https://github.com/yu1745/wetype-ime-linux)。
 
 ![功能一览](docs/截图/功能一览.png)
 
