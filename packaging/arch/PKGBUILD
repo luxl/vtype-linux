@@ -2,7 +2,7 @@
 # 在本机构建、通过 pacman 管理的 VType 包。
 pkgname=vtype-linux
 pkgver=0.1.8
-pkgrel=5
+pkgrel=6
 pkgdesc='微信输入法 Android 引擎的 Fcitx5 插件'
 arch=('x86_64')
 url='https://github.com/zhl-HFUT/vtype-linux'
@@ -26,6 +26,7 @@ source=("vtype-linux::git+${url}.git#commit=${_commit}"
         "wetype_${_apkver}.apk::https://download.z.weixin.qq.com/app/android/${_apkver}/wxkb_1308_32.apk"
         'microsoft-double-pinyin.patch'
         'tray-icon.patch'
+        'mode-hint.patch'
         'tray-icon.png'
         'README.md'
         'vtype-linux.install')
@@ -35,14 +36,16 @@ sha256sums=('SKIP'
             '7b57a5a9ab3aefd30413165f298213961bd201815ab48c6ad205c3b2950a90fb'
             '1bfec450f18f2613edcc20bc2fc9faccfe955730b76527ac8466b67f06dc0574'
             '19f49df6eafa204787607be4dfe2d173ed6169477183a35f9b54774f3b896d73'
+            '3bd6f12642697f79995e4f50e58b4b09c787c0685d0a9962a806630852986115'
             'f1b23d6b6ecf586386af2f8f3fbceb3236b2139f82581f2f792bcf114a501cea'
-            '6d602d61651172a1fe5a1714f4bb22dabb4d7940e5ec37fe9d0df64ac2d55791'
+            'c4c7565e61f58cc20a30fea8f31766ad97376470736292cc0414448baf625cf7'
             'afe9bd0e559d59bd806e0e3916ec3e09a9cd914867fdf27a895f520fc858dc75')
 
 prepare() {
   cd "$srcdir/vtype-linux"
   patch -Np1 -i "$srcdir/microsoft-double-pinyin.patch"
   patch -Np1 -i "$srcdir/tray-icon.patch"
+  patch -Np1 -i "$srcdir/mode-hint.patch"
   install -m644 "$srcdir/tray-icon.png" assets/wetype-ime.png
 }
 

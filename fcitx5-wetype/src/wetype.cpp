@@ -588,6 +588,8 @@ private:
         else clearAll(ic);
         auto *state=ic->propertyFor(&modeFactory_);state->english=!state->english;
         ic->updateUserInterface(UserInterfaceComponent::StatusArea);
+        // 用 Fcitx 的光标提示显示当前模式；简洁模式采用 subModeLabel 的“中/英”。
+        instance_->showInputMethodInformation(ic);
     }
 
     // 每页候选数跟随 fcitx5 全局设置"候选词数量"(1-10), 取不到时回退 5。

@@ -1,0 +1,165 @@
+diff --git a/fcitx5-wetype/src/wetype.cpp b/fcitx5-wetype/src/wetype.cpp
+--- a/fcitx5-wetype/src/wetype.cpp
++++ b/fcitx5-wetype/src/wetype.cpp
+@@ -588,6 +588,8 @@
+         else clearAll(ic);
+         auto *state=ic->propertyFor(&modeFactory_);state->english=!state->english;
+         ic->updateUserInterface(UserInterfaceComponent::StatusArea);
++        // 用 Fcitx 的光标提示显示当前模式；简洁模式采用 subModeLabel 的“中/英”。
++        instance_->showInputMethodInformation(ic);
+     }
+ 
+     // 每页候选数跟随 fcitx5 全局设置"候选词数量"(1-10), 取不到时回退 5。
+diff --git a/docs/安装与使用.md b/docs/安装与使用.md
+--- a/docs/安装与使用.md
++++ b/docs/安装与使用.md
+@@ -113,7 +113,7 @@
+ 
+ | 按键 | 作用 |
+ |---|---|
+-| 单独按 Shift | 中英切换（在微信输入法内部切换，不会切到别的输入法） |
++| 单独按 Shift | 在微信输入法内部切换中英，光标附近短暂显示当前模式（简洁显示为“中 / 英”） |
+ | Shift+字母 / CapsLock | 中文模式下带大写字母的输入按英文处理：词库里的英文词按你输入的大小写给出（如 `BevF` → BevFusion），没有匹配就原样上屏 |
+ | Ctrl+Space | Fcitx5 自己的快捷键，默认在微信拼音和英文键盘之间切换 |
+ | 方向键 `←` `→` | 移动拼音光标（可插入或修改拼音，支持在配置中切换为候选移动） |
+@@ -125,6 +125,7 @@
+ | Readline 快捷键 | 组词时支持 `Ctrl+A`/`E`（首尾）、`Ctrl+B`/`F`（前进后退）、`Ctrl+D`/`H`（删字）、`Ctrl+K`/`U`（删至行尾/行首） |
+ | `;` | 微软双拼中，小写编码的第二键输入 `ing`；其他位置按标点或自定义翻页设置处理 |
+ 
++- 中英切换提示沿用 Fcitx5 全局设置中的“切换输入法时显示输入法信息”和“显示紧凑的输入法信息”。开启紧凑显示时只显示“中”或“英”，提示会自动隐藏，继续输入即可正常组词。
+ - 拼音光标行内编辑与定位：
+   - 默认开启（`ArrowKeysMoveCursor=true`）。输入拼音后尚未确认候选时，按 `←` / `→` 可将光标精确定位到指定字母处插入或修改（例如输入 `shrufa` 后按 4 次左键定位到 `h` 后插入 `u` 变成 `shurufa`，立即更新候选词）。
+   - 按 `Home` / `End` 可一键跳转到拼音首尾；`Delete` 删除光标后字母，`BackSpace` 删除光标前字母。
+@@ -167,6 +168,9 @@
+ bash fcitx5-wetype/e2e/run_paging_e2e.sh
+ ```
+ 
++将上面的 `WETYPE_E2E_SCRIPT` 改为 `$PWD/fcitx5-wetype/e2e/mode_hint_test.py`，
++可检查 Shift 的“中 / 英”提示、自动隐藏、组合键和切换时的未完成输入。
++
+ 小鹤和微软双拼的集成检查使用临时词库：
+ 
+ ```sh
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -41,3 +41,3 @@
+ | **大小写混输** | 带大写的输入按英文处理，`OpenC` → OpenClaw，词库里的英文词保留你打的大小写 |
+-| **按键习惯** | 单独按 Shift 切中英，中文标点自动配对，数字里的小数点保持英文；方向键左右移动拼音光标（可精准定位插入修改，支持 Home/End/Delete/Readline 键）；Tab 循环选词；可自定义翻页键（默认 -/=、方向键、PgUp/PgDn）；可配置“始终使用英文标点” |
++| **按键习惯** | 单独按 Shift 切中英，光标附近短暂显示当前模式（简洁显示为“中 / 英”）；中文标点自动配对，数字里的小数点保持英文；方向键左右移动拼音光标（可精准定位插入修改，支持 Home/End/Delete/Readline 键）；Tab 循环选词；可自定义翻页键（默认 -/=、方向键、PgUp/PgDn）；可配置“始终使用英文标点” |
+ 
+diff --git a/fcitx5-wetype/e2e/mode_hint_test.py b/fcitx5-wetype/e2e/mode_hint_test.py
+new file mode 100644
+--- /dev/null
++++ b/fcitx5-wetype/e2e/mode_hint_test.py
+@@ -0,0 +1,110 @@
++"""在私有 D-Bus 会话验证 Shift 切换提示、自动隐藏和组词保护。"""
++import os
++from pathlib import Path
++
++from dbus_test_client import Client, controller, paused_engine, pump
++
++SHIFT_L = 0xFFE1
++SHIFT_R = 0xFFE2
++
++
++def configure_hint(enabled=True):
++    # 路径由隔离运行器提供，只修改临时配置。
++    Path(os.environ['WETYPE_PAGETEST_CONFIG']).write_text(
++        '[Behavior]\nCompactInputMethodInformation=True\n'
++        'ShowInputMethodInformation=%s\n' % ('True' if enabled else 'False'))
++    controller.ReloadConfig()
++    pump()
++
++
++class HintClient(Client):
++    def __init__(self):
++        super().__init__('wetype-mode-hint')
++        self.hint = ''
++        self.panel_preedit = ''
++
++    def _ui(self, *args):
++        super()._ui(*args)
++        self.panel_preedit = ''.join(str(part[0]) for part in args[0])
++        self.hint = ''.join(str(part[0]) for part in args[2])
++
++    def tap_shift(self, key=SHIFT_L):
++        self.press(key)
++        self.press(key, states=1, release=True)
++
++
++configure_hint()
++c = HintClient()
++c.focus()
++pump(1.1)
++assert c.hint == '', c.hint
++
++for key in (SHIFT_L, SHIFT_R):
++    c.tap_shift(key)
++    assert c.hint == '英', repr(c.hint)
++    assert not c.commits and not c.candidates and not c.panel_preedit
++    assert str(controller.CurrentInputMethod()) == 'wetype-im'
++    assert not c.press('a'), '英文模式应将字母交给应用'
++    c.tap_shift(key)
++    assert c.hint == '中', repr(c.hint)
++    assert not c.commits and not c.candidates and not c.panel_preedit
++    assert str(controller.CurrentInputMethod()) == 'wetype-im'
++print('PASS 左右 Shift 均显示中/英，不上屏提示文字、不切换输入法')
++
++pump(1.1)
++assert c.hint == '', '提示应自动隐藏'
++c.tap_shift()
++c.tap_shift()
++assert c.hint == '中', repr(c.hint)
++c.type('nihao')
++assert c.hint == '' and c.candidates, '继续输入应恢复正常候选'
++c.press('space')
++assert c.commits == ['你好'], c.commits
++c.commits.clear()
++print('PASS 自动隐藏、快速往返切换和继续中文输入')
++
++c.type('nihao')
++c.tap_shift()
++assert c.commits == ['nihao'] and c.hint == '英', (c.commits, c.hint)
++assert not c.candidates and not c.panel_preedit
++c.commits.clear()
++c.tap_shift()
++print('PASS 组词中切换保留原始拼音并显示新模式')
++
++with paused_engine():
++    c.type('nihao', wait=False)
++    c.press('space', delay=0)
++    c.type('zhongguo', wait=False)
++    c.tap_shift()
++    assert ''.join(c.commits) == 'nihao zhongguo', c.commits
++    assert c.hint == '英', repr(c.hint)
++pump(.3)
++assert ''.join(c.commits) == 'nihao zhongguo' and not c.candidates
++assert c.hint == '英', '迟到引擎响应不应覆盖模式提示'
++c.commits.clear()
++c.tap_shift()
++pump(1.1)
++print('PASS 等待候选时切换保留所有按键，迟到响应不覆盖提示')
++
++c.press(SHIFT_L)
++c.press('A', states=1)
++c.press(SHIFT_L, states=1, release=True)
++assert not c.hint, 'Shift 组合键不应触发模式提示'
++c.press('enter')
++assert c.commits == ['A'], c.commits
++c.commits.clear()
++c.type('nihao')
++c.press('space')
++assert c.commits == ['你好'], c.commits
++c.commits.clear()
++print('PASS Shift 组合键保持原有输入行为')
++
++configure_hint(False)
++c.tap_shift()
++assert not c.hint and not c.press('a')
++c.tap_shift()
++assert not c.hint
++c.type('nihao')
++c.press('space')
++assert c.commits == ['你好'], c.commits
++print('PASS 遵循 Fcitx 全局提示开关，关闭提示仍能正常切换')
